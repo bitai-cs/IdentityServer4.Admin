@@ -30,6 +30,7 @@ using Skoruba.IdentityServer4.Admin.UI.Helpers;
 using Skoruba.IdentityServer4.Admin.UI.Helpers.Localization;
 using Xunit;
 using System.Security.Claims;
+using Skoruba.IdentityServer4.Shared.Configuration.Configuration.Identity;
 
 namespace Skoruba.IdentityServer4.Admin.UnitTests.Controllers
 {
@@ -549,122 +550,126 @@ namespace Skoruba.IdentityServer4.Admin.UnitTests.Controllers
             userProvider.Should().BeNull();
         }
 
-        private IdentityController<UserDto<string>, RoleDto<string>,
-            UserIdentity, UserIdentityRole, string, UserIdentityUserClaim, UserIdentityUserRole,
-            UserIdentityUserLogin, UserIdentityRoleClaim, UserIdentityUserToken,
-            UsersDto<UserDto<string>, string>, RolesDto<RoleDto<string>, string>, UserRolesDto<RoleDto<string>, string>,
-            UserClaimsDto<UserClaimDto<string>, string>, UserProviderDto<string>, UserProvidersDto<UserProviderDto<string>, string>, UserChangePasswordDto<string>,
-            RoleClaimsDto<RoleClaimDto<string>, string>, UserClaimDto<string>, RoleClaimDto<string>> PrepareIdentityController(IServiceProvider serviceProvider)
-        {
-            // Arrange
-            var localizer = serviceProvider.GetRequiredService<IGenericControllerLocalizer<IdentityController<UserDto<string>, RoleDto<string>,
-                UserIdentity, UserIdentityRole, string, UserIdentityUserClaim, UserIdentityUserRole,
-                UserIdentityUserLogin, UserIdentityRoleClaim, UserIdentityUserToken,
-                UsersDto<UserDto<string>, string>, RolesDto<RoleDto<string>, string>, UserRolesDto<RoleDto<string>, string>,
-                UserClaimsDto<UserClaimDto<string>, string>, UserProviderDto<string>, UserProvidersDto<UserProviderDto<string>,string>, UserChangePasswordDto<string>,
-                RoleClaimsDto<RoleClaimDto<string>, string>, UserClaimDto<string>, RoleClaimDto<string>>>>();
-            var logger = serviceProvider.GetRequiredService<ILogger<ConfigurationController>>();
-            var tempDataDictionaryFactory = serviceProvider.GetRequiredService<ITempDataDictionaryFactory>();
-            var identityService = GetIdentityService(serviceProvider);
+		private IdentityController<UserDto<string>, RoleDto<string>,
+			 UserIdentity, UserIdentityRole, string, UserIdentityUserClaim, UserIdentityUserRole,
+			 UserIdentityUserLogin, UserIdentityRoleClaim, UserIdentityUserToken,
+			 UsersDto<UserDto<string>, string>, RolesDto<RoleDto<string>, string>, UserRolesDto<RoleDto<string>, string>,
+			 UserClaimsDto<UserClaimDto<string>, string>, UserProviderDto<string>, UserProvidersDto<UserProviderDto<string>, string>, UserChangePasswordDto<string>,
+			 RoleClaimsDto<RoleClaimDto<string>, string>, UserClaimDto<string>, RoleClaimDto<string>> PrepareIdentityController(IServiceProvider serviceProvider)
+		{
+			// Arrange
+			var localizer = serviceProvider.GetRequiredService<IGenericControllerLocalizer<IdentityController<UserDto<string>, RoleDto<string>,
+				 UserIdentity, UserIdentityRole, string, UserIdentityUserClaim, UserIdentityUserRole,
+				 UserIdentityUserLogin, UserIdentityRoleClaim, UserIdentityUserToken,
+				 UsersDto<UserDto<string>, string>, RolesDto<RoleDto<string>, string>, UserRolesDto<RoleDto<string>, string>,
+				 UserClaimsDto<UserClaimDto<string>, string>, UserProviderDto<string>, UserProvidersDto<UserProviderDto<string>, string>, UserChangePasswordDto<string>,
+				 RoleClaimsDto<RoleClaimDto<string>, string>, UserClaimDto<string>, RoleClaimDto<string>>>>();
+			var logger = serviceProvider.GetRequiredService<ILogger<ConfigurationController>>();
+			var tempDataDictionaryFactory = serviceProvider.GetRequiredService<ITempDataDictionaryFactory>();
+			var identityService = GetIdentityService(serviceProvider);
+			var userDomainsConfiguration = serviceProvider.GetRequiredService<UserDomainsConfiguration>();
 
-            //Get Controller
-            var controller = new IdentityController<UserDto<string>, RoleDto<string>,
-                UserIdentity, UserIdentityRole, string, UserIdentityUserClaim, UserIdentityUserRole,
-                UserIdentityUserLogin, UserIdentityRoleClaim, UserIdentityUserToken,
-                UsersDto<UserDto<string>, string>, RolesDto<RoleDto<string>, string>, UserRolesDto<RoleDto<string>, string>,
-                UserClaimsDto<UserClaimDto<string>, string>, UserProviderDto<string>, UserProvidersDto<UserProviderDto<string>, string>, UserChangePasswordDto<string>,
-                RoleClaimsDto<RoleClaimDto<string>, string>, UserClaimDto<string>, RoleClaimDto<string>>(identityService, logger, localizer);
+			//Get Controller
+			var controller = new IdentityController<UserDto<string>, RoleDto<string>,
+				 UserIdentity, UserIdentityRole, string, UserIdentityUserClaim, UserIdentityUserRole,
+				 UserIdentityUserLogin, UserIdentityRoleClaim, UserIdentityUserToken,
+				 UsersDto<UserDto<string>, string>, RolesDto<RoleDto<string>, string>, UserRolesDto<RoleDto<string>, string>,
+				 UserClaimsDto<UserClaimDto<string>, string>, UserProviderDto<string>, UserProvidersDto<UserProviderDto<string>, string>, UserChangePasswordDto<string>,
+				 RoleClaimsDto<RoleClaimDto<string>, string>, UserClaimDto<string>, RoleClaimDto<string>>(identityService, logger, localizer, userDomainsConfiguration);
 
-            //Setup TempData for notification in basecontroller
-            var httpContext = serviceProvider.GetRequiredService<IHttpContextAccessor>().HttpContext;
-            var tempData = tempDataDictionaryFactory.GetTempData(httpContext);
-            controller.TempData = tempData;
+			//Setup TempData for notification in basecontroller
+			var httpContext = serviceProvider.GetRequiredService<IHttpContextAccessor>().HttpContext;
+			var tempData = tempDataDictionaryFactory.GetTempData(httpContext);
+			controller.TempData = tempData;
 
-            return controller;
-        }
+			return controller;
+		}
 
-        private IServiceProvider GetServices()
-        {
-            var services = new ServiceCollection();
+		private IServiceProvider GetServices()
+		{
+			var services = new ServiceCollection();
 
-            services.AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());
+			services.AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());
 
-            //Entity framework
-            var efServiceProvider = new ServiceCollection().AddEntityFrameworkInMemoryDatabase().BuildServiceProvider();
-            services.AddOptions();
-            services.AddDbContext<AdminIdentityDbContext>(b => b.UseInMemoryDatabase(Guid.NewGuid().ToString()).UseInternalServiceProvider(efServiceProvider));
-            services.AddDbContext<AdminAuditLogDbContext>(b => b.UseInMemoryDatabase(Guid.NewGuid().ToString()).UseInternalServiceProvider(efServiceProvider));
+			//Entity framework
+			var efServiceProvider = new ServiceCollection().AddEntityFrameworkInMemoryDatabase().BuildServiceProvider();
+			services.AddOptions();
+			services.AddDbContext<AdminIdentityDbContext>(b => b.UseInMemoryDatabase(Guid.NewGuid().ToString()).UseInternalServiceProvider(efServiceProvider));
+			services.AddDbContext<AdminAuditLogDbContext>(b => b.UseInMemoryDatabase(Guid.NewGuid().ToString()).UseInternalServiceProvider(efServiceProvider));
 
-            //Http Context
-            var context = new DefaultHttpContext();
-            services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor { HttpContext = context });
+			//Http Context
+			var context = new DefaultHttpContext();
+			services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor { HttpContext = context });
 
-            //IdentityServer4 EntityFramework configuration
-            services.AddSingleton<ConfigurationStoreOptions>();
-            services.AddSingleton<OperationalStoreOptions>();
+			//IdentityServer4 EntityFramework configuration
+			services.AddSingleton<ConfigurationStoreOptions>();
+			services.AddSingleton<OperationalStoreOptions>();
 
-            //Audit logging
-            services.AddAuditLogging()
-                .AddDefaultEventData()
-                .AddAuditSinks<DatabaseAuditEventLoggerSink<AuditLog>>();
-            services.AddTransient<IAuditLoggingRepository<AuditLog>, AuditLoggingRepository<AdminAuditLogDbContext, AuditLog>>();
+			//Audit logging
+			services.AddAuditLogging()
+				 .AddDefaultEventData()
+				 .AddAuditSinks<DatabaseAuditEventLoggerSink<AuditLog>>();
+			services.AddTransient<IAuditLoggingRepository<AuditLog>, AuditLoggingRepository<AdminAuditLogDbContext, AuditLog>>();
 
 
-            //Add Admin services
-            services.AddMvcExceptionFilters();
+			//Add Admin services
+			services.AddMvcExceptionFilters();
 
-            services.AddAdminServices<IdentityServerConfigurationDbContext, IdentityServerPersistedGrantDbContext, AdminLogDbContext>();
+			services.AddAdminServices<IdentityServerConfigurationDbContext, IdentityServerPersistedGrantDbContext, AdminLogDbContext>();
 
-            services.AddAdminAspNetIdentityServices<AdminIdentityDbContext, IdentityServerPersistedGrantDbContext, UserDto<string>, RoleDto<string>,
-                UserIdentity, UserIdentityRole, string, UserIdentityUserClaim, UserIdentityUserRole,
-                UserIdentityUserLogin, UserIdentityRoleClaim, UserIdentityUserToken,
-                UsersDto<UserDto<string>, string>, RolesDto<RoleDto<string>, string>, UserRolesDto<RoleDto<string>, string>,
-                UserClaimsDto<UserClaimDto<string>, string>, UserProviderDto<string>, UserProvidersDto<UserProviderDto<string>, string>, UserChangePasswordDto<string>,
-                RoleClaimsDto<RoleClaimDto<string>, string>, UserClaimDto<string>, RoleClaimDto<string>>();
+			services.AddAdminAspNetIdentityServices<AdminIdentityDbContext, IdentityServerPersistedGrantDbContext, UserDto<string>, RoleDto<string>,
+				 UserIdentity, UserIdentityRole, string, UserIdentityUserClaim, UserIdentityUserRole,
+				 UserIdentityUserLogin, UserIdentityRoleClaim, UserIdentityUserToken,
+				 UsersDto<UserDto<string>, string>, RolesDto<RoleDto<string>, string>, UserRolesDto<RoleDto<string>, string>,
+				 UserClaimsDto<UserClaimDto<string>, string>, UserProviderDto<string>, UserProvidersDto<UserProviderDto<string>, string>, UserChangePasswordDto<string>,
+				 RoleClaimsDto<RoleClaimDto<string>, string>, UserClaimDto<string>, RoleClaimDto<string>>();
 
-            services.AddIdentity<UserIdentity, UserIdentityRole>()
-                .AddEntityFrameworkStores<AdminIdentityDbContext>()
-                .AddDefaultTokenProviders();
+			services.AddIdentity<UserIdentity, UserIdentityRole>()
+				 .AddEntityFrameworkStores<AdminIdentityDbContext>()
+				 .AddDefaultTokenProviders();
 
-            services.AddSession();
+			services.AddSession();
 
-            services.TryAddTransient(typeof(IGenericControllerLocalizer<>), typeof(GenericControllerLocalizer<>));
+			services.TryAddTransient(typeof(IGenericControllerLocalizer<>), typeof(GenericControllerLocalizer<>));
 
-            services.AddControllersWithViews()
-            .AddViewLocalization(
-                LanguageViewLocationExpanderFormat.Suffix,
-                opts => { opts.ResourcesPath = "Resources"; })
-            .AddDataAnnotationsLocalization();
+			services.AddControllersWithViews()
+			.AddViewLocalization(
+				 LanguageViewLocationExpanderFormat.Suffix,
+				 opts => { opts.ResourcesPath = "Resources"; })
+			.AddDataAnnotationsLocalization();
 
-            services.Configure<RequestLocalizationOptions>(
-                opts =>
-                {
-                    var supportedCultures = new[]
-                    {
-                        new CultureInfo("en-US"),
-                        new CultureInfo("en")
-                    };
+			services.Configure<RequestLocalizationOptions>(
+				 opts =>
+				 {
+					 var supportedCultures = new[]
+						 {
+								new CultureInfo("en-US"),
+								new CultureInfo("en")
+					  };
 
-                    opts.DefaultRequestCulture = new RequestCulture("en");
-                    opts.SupportedCultures = supportedCultures;
-                    opts.SupportedUICultures = supportedCultures;
-                });
+					 opts.DefaultRequestCulture = new RequestCulture("en");
+					 opts.SupportedCultures = supportedCultures;
+					 opts.SupportedUICultures = supportedCultures;
+				 });
 
-            services.AddLogging();
+			services.AddLogging();
 
-            return services.BuildServiceProvider();
-        }
+			//User domains feature configuration
+			services.AddSingleton<UserDomainsConfiguration>();
 
-        private void ProvideControllerContextWithClaimsPrincipal(ControllerBase controller, params Claim[] claims)
-        {
-            controller.ControllerContext = new ControllerContext
-            {
-                HttpContext = new DefaultHttpContext
-                {
-                    User = new System.Security.Claims.ClaimsPrincipal(
-                        new ClaimsIdentity(claims, "mock"))
-                }
-            };
-        }
-    }
+			return services.BuildServiceProvider();
+		}
+
+		private void ProvideControllerContextWithClaimsPrincipal(ControllerBase controller, params Claim[] claims)
+		{
+			controller.ControllerContext = new ControllerContext
+			{
+				HttpContext = new DefaultHttpContext
+				{
+					User = new System.Security.Claims.ClaimsPrincipal(
+							new ClaimsIdentity(claims, "mock"))
+				}
+			};
+		}
+	}
 }
